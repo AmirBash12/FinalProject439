@@ -26,8 +26,8 @@ SECRET_KEY = 'django-insecure-$xr%hep*oxr^1r^z1%h^2p7k=y_6=57_=n!)uexx5$4!=*@e--
 # SECURITY WARNING: don't run with debug turned on in production!
 #DEBUG = True
 DEBUG= False
-ALLOWED_HOSTS = ['AmirYassmineContactRecommend439.azurewebsites.net','*']  # Replace with your Azure web app's hostname
-CSRF_TRUSTED_ORIGINS = ['https://AmirYassmineContactRecommend439.azurewebsites.net']
+ALLOWED_HOSTS = ['AmirYassmine439ContactList.azurewebsites.net','*']  # Replace with your Azure web app's hostname
+CSRF_TRUSTED_ORIGINS = ['https://AmirYassmine439ContactList.azurewebsites.net']
 
 
 # Application definition
