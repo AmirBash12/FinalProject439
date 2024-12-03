@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Recommendation Results</title>
+    <style>
+        /* Add styling for wider and longer text box */
+        textarea#user_input {
+            width: 100%;
+            height: 150px;
+            font-size: 16px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        table#info_table {
+            border-collapse: collapse;
+            width: 40%;
+            margin-top: 20px;
+            margin-right: 20px;
+            float: right;
+            font-size: 14px;
+        }
+
+        table#info_table th, table#info_table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        table#info_table th {
+            background-color: #f2f2f2;
+            text-align: center;
+        }
+
+        .results-section {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Smart Recommendation System</h1>
+    <form method="post">
+        {% csrf_token %}
+        <textarea id="user_input" name="user_input" placeholder="Example: Cardiologist in Beirut with rating equal 3 and cost equal 1500">{{ user_input }}</textarea>
+        <button type="submit">Get Recommendation</button>
+    </form>
+
+    <!-- Information Table -->
+    <table id="info_table">
+        <thead>
+            <tr>
+                <th>Field</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Cities</td>
+                <td>Beirut, Tripoli, Sidon, Byblos, Zahle, Baalbek, Jezzine, Keserwan, Jounieh, Aley, Chouf, Tyre, Batroun, Zgharta, Baabda</td>
+            </tr>
+            <tr>
+                <td>Specializations</td>
+                <td>ENT Specialist, Neurosurgeon, Pediatric Surgeon, Cardiologist, Gastroenterologist, Orthopedic Surgeon, Dermatologist, Oncologist, General Surgeon, Plastic Surgeon</td>
+            </tr>
+            <tr>
+                <td>Rating</td>
+                <td>Values between 0 and 5 (e.g., rating equal 3 or rating=3)</td>
+            </tr>
+            <tr>
+                <td>Cost</td>
+                <td>Values below 2000 (e.g., cost equal 1500 or cost=1500)</td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <div class="results-section">
+        <div class="extracted-specifications">
+            <h3>Applied Filters:</h3>
+            <ul>
+                <li><strong>Specialization:</strong> {{ keywords.specialization }}</li>
+                <li><strong>City:</strong> {{ keywords.city }}</li>
+                <li><strong>Minimum Rating:</strong> {{ keywords.min_rating }}</li>
+                <li><strong>Maximum Fees:</strong> ${{ keywords.max_fees }}</li>
+            </ul>
+        </div>
+    
+        {% if contacts %}
+            <h2>Recommended Contacts:</h2>
+            <ul>
+                {% for contact in contacts %}
+                    <li>
+                        <a href="{% url 'contact_detail' contact.pk %}"><strong>{{ contact.name }}</strong></a><br>
+                        Specialization: {{ contact.specialization }}<br>
+                        City: {{ contact.city }}<br>
+                        Rating: {{ contact.rating }}<br>
+                        Fees: ${{ contact.fees }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% elif user_input %}
+            <p>No results found for your query.</p>
+        {% endif %}
+    </div>
+    

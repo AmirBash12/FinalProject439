@@ -1,0 +1,9 @@
+<h1>{{ contact.name }}</h1>
+<p>Specialization: {{ contact.specialization }}</p>
+<p>City: {{ contact.city }}</p>
+<p>Fees: ${{ contact.fees }}</p>
+<p>Rating: {{ contact.rating }}</p>
+<p>Phone: {{ contact.phone }}</p>
+<a href="{% url 'contact_update' contact.pk %}">Edit</a>
+<a href="{% url 'contact_delete' contact.pk %}">Delete</a>
+<a href="{% url 'contact_list' %}">Back to list</a>

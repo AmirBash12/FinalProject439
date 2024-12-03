@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Similarity-Based Recommendations</title>
+    <!-- Add Chart.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        p {
+            text-align: center;
+            font-size: 18px;
+            color: #555;
+        }
+        form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 60%;
+            height: 50px;
+            font-size: 16px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .no-recommendations {
+            text-align: center;
+            font-size: 18px;
+            color: #ff0000;
+        }
+        .chart-container {
+            width: 80%;
+            margin: 40px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chart-controls {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: inline-block;
+            margin: 0 10px;
+        }
+        select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Similarity-Based Recommendations</h1>
+    <p>Recommended based on your input: <strong>{{ user_input }}</strong></p>
+
+    <form method="post">
+        {% csrf_token %}
+        <textarea name="user_input" placeholder="Enter your search query here...">{{ user_input }}</textarea>
+        <br>
+        <button type="submit">Search Again</button>
+    </form>
+
+    {% if contacts_with_scores %}
+        <h2 style="text-align: center; color: #333;">Recommended Contacts</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>City</th>
+                    <th>Specialization</th>
+                    <th>Fees</th>
+                    <th>Rating</th>
+                    <th>Similarity Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contact, score in contacts_with_scores %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ contact.name }}</td>
+                        <td>{{ contact.city }}</td>
+                        <td>{{ contact.specialization }}</td>
+                        <td>${{ contact.fees }}</td>
+                        <td>{{ contact.rating }}</td>
+                        <td>{{ score|floatformat:3 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Bar Chart Container -->
+        <div class="chart-container">
+            <canvas id="similarityChart"></canvas>
+        </div>
+
+        <!-- Enhanced Cluster Chart Container -->
+        <div class="chart-container">
+            <div class="chart-controls">
+                <div class="control-group">
+                    <label for="visualizationType">Visualization Type:</label>
+                    <select id="visualizationType" onchange="updateClusterChart()">
+                        <option value="numerical">Numerical Data</option>
+                        <option value="categorical">Categorical Data</option>
+                    </select>
+                </div>
+                
+                <!-- Numerical Data Controls -->
+                <div id="numericalControls">
+                    <div class="control-group">
+                        <label for="xAxis">X-Axis:</label>
+                        <select id="xAxis" onchange="updateClusterChart()">
+                            <option value="fees">Fees</option>
+                            <option value="rating">Rating</option>
+                            <option value="similarity">Similarity Score</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="yAxis">Y-Axis:</label>
+                        <select id="yAxis" onchange="updateClusterChart()">
+                            <option value="rating">Rating</option>
+                            <option value="fees">Fees</option>
+                            <option value="similarity">Similarity Score</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Categorical Data Controls -->
+                <div id="categoricalControls" style="display: none;">
+                    <div class="control-group">
+                        <label for="categoryType">Category:</label>
+                        <select id="categoryType" onchange="updateClusterChart()">
+                            <option value="city">City</option>
+                            <option value="specialization">Specialization</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <canvas id="clusterChart"></canvas>
+        </div>
+
+        <!-- Bar Chart Script -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const ctx = document.getElementById('similarityChart').getContext('2d');
+                
+                // Extract data from the table
+                const names = [];
+                const scores = [];
+                const tableRows = document.querySelectorAll('table tbody tr');
+                
+                tableRows.forEach(row => {
+                    const name = row.cells[1].textContent;
+                    const score = parseFloat(row.cells[6].textContent);
+                    names.push(name);
+                    scores.push(score);
+                });
+
+                // Create the bar chart
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: names,
+                        datasets: [{
+                            label: 'Similarity Score',
+                            data: scores,
+                            backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                            borderColor: 'rgba(0, 123, 255, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 1,
+                                title: {
+                                    display: true,
+                                    text: 'KNN Similarity Score'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Contact Name'
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'KNN Similarity Scores Comparison',
+                                font: {
+                                    size: 16
+                                }
+                            },
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+
+        <!-- Enhanced Cluster Chart Script -->
+        <script>
+            let clusterChart = null;
+
+            document.getElementById('visualizationType').addEventListener('change', function() {
+                const numericalControls = document.getElementById('numericalControls');
+                const categoricalControls = document.getElementById('categoricalControls');
+                
+                if (this.value === 'numerical') {
+                    numericalControls.style.display = 'block';
+                    categoricalControls.style.display = 'none';
+                } else {
+                    numericalControls.style.display = 'none';
+                    categoricalControls.style.display = 'block';
+                }
+                updateClusterChart();
+            });
+
+            function updateClusterChart() {
+                const visualizationType = document.getElementById('visualizationType').value;
+                const tableRows = document.querySelectorAll('table tbody tr');
+                const data = [];
+                
+                // Extract all data from table
+                tableRows.forEach(row => {
+                    const point = {
+                        name: row.cells[1].textContent,
+                        city: row.cells[2].textContent,
+                        specialization: row.cells[3].textContent,
+                        fees: parseFloat(row.cells[4].textContent.replace('$', '')),
+                        rating: parseFloat(row.cells[5].textContent),
+                        similarity: parseFloat(row.cells[6].textContent)
+                    };
+                    data.push(point);
+                });
+
+                // Destroy existing chart
+                if (clusterChart) {
+                    clusterChart.destroy();
+                }
+
+                const ctx = document.getElementById('clusterChart').getContext('2d');
+
+                if (visualizationType === 'numerical') {
+                    createNumericalChart(ctx, data);
+                } else {
+                    createCategoricalChart(ctx, data);
+                }
+            }
+
+            function createNumericalChart(ctx, data) {
+                const xAxis = document.getElementById('xAxis').value;
+                const yAxis = document.getElementById('yAxis').value;
+
+                clusterChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Contacts',
+                            data: data.map(point => ({
+                                x: point[xAxis],
+                                y: point[yAxis]
+                            })),
+                            backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                            borderColor: 'rgba(0, 123, 255, 1)',
+                            borderWidth: 1,
+                            pointRadius: 8,
+                            pointHoverRadius: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: xAxis.charAt(0).toUpperCase() + xAxis.slice(1)
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: yAxis.charAt(0).toUpperCase() + yAxis.slice(1)
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Numerical Data Analysis',
+                                font: {
+                                    size: 16
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const point = data[context.dataIndex];
+                                        return `${point.name}: (${context.raw.x.toFixed(2)}, ${context.raw.y.toFixed(2)})`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createCategoricalChart(ctx, data) {
+                const categoryType = document.getElementById('categoryType').value;
+                
+                // Get unique categories and count their occurrences
+                const categories = {};
+                data.forEach(point => {
+                    const category = point[categoryType];
+                    categories[category] = (categories[category] || 0) + 1;
+                });
+
+                clusterChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(categories),
+                        datasets: [{
+                            label: `${categoryType.charAt(0).toUpperCase() + categoryType.slice(1)} Distribution`,
+                            data: Object.values(categories),
+                            backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                            borderColor: 'rgba(0, 123, 255, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Contacts'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: categoryType.charAt(0).toUpperCase() + categoryType.slice(1)
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `${categoryType.charAt(0).toUpperCase() + categoryType.slice(1)} Distribution Analysis`,
+                                font: {
+                                    size: 16
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Initialize the cluster chart when the page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                updateClusterChart();
+            });
+        </script>
+    {% endif %}
+</body>
+</html>

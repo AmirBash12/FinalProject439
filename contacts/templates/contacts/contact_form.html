@@ -1,0 +1,37 @@
+<h1>{% if contact %}Edit Contact{% else %}Add New Doctor Contact Details{% endif %}</h1>
+<form method="POST">
+    {% csrf_token %}
+    <label for="name">Name:</label>
+    <input type="text" name="name" id="name" value="{{ contact.name|default_if_none:'' }}">
+
+    <label for="specialization">Specialization:</label>
+    <select name="specialization" id="specialization">
+        <option value="">--Select Specialization--</option>
+        {% for spec in specializations %}
+            <option value="{{ spec }}" {% if contact.specialization == spec %}selected{% endif %}>{{ spec }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="city">City:</label>
+    <select name="city" id="city">
+        <option value="">--Select City--</option>
+        {% for city in cities %}
+            <option value="{{ city }}" {% if contact.city == city %}selected{% endif %}>{{ city }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="address">Address:</label>
+    <textarea name="address" id="address">{{ contact.address|default_if_none:'' }}</textarea>
+
+    <label for="fees">Fees (USD):</label>
+    <input type="number" name="fees" id="fees" value="{{ contact.fees|default_if_none:'' }}">
+
+    <label for="rating">Rating:</label>
+    <input type="number" name="rating" id="rating" step="0.1" min="1" max="5" value="{{ contact.rating|default_if_none:'' }}">
+
+    <label for="phone">Phone:</label>
+    <input type="text" name="phone" id="phone" maxlength="8" value="{{ contact.phone|default_if_none:'' }}">
+
+    <button type="submit">Save</button>
+</form>
+<a href="{% url 'contact_list' %}">Back to Contacts</a>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Similarity Recommendation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .form-container {
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            font-size: 16px;
+            padding: 10px;
+        }
+        .info-table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .info-table th, .info-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .info-table th {
+            background-color: #f4f4f4;
+            text-align: left;
+        }
+        .submit-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .submit-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Similarity Recommendation</h1>
+    <div class="form-container">
+        <form method="POST">
+            {% csrf_token %}
+            <label for="user_input">Enter your search query:</label><br>
+            <textarea name="user_input" id="user_input" placeholder="e.g., Cardiologist in Beirut with rating=4 and cost=1500">{{ user_input }}</textarea><br>
+            <button type="submit" class="submit-button">Submit</button>
+        </form>
+    </div>
+    <h2>Format and Options</h2>
+    <table class="info-table">
+        <thead>
+            <tr>
+                <th>Field</th>
+                <th>Format</th>
+                <th>Examples</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Specialization</td>
+                <td>Exact match</td>
+                <td>Cardiologist, ENT Specialist, Neurosurgeon</td>
+            </tr>
+            <tr>
+                <td>City</td>
+                <td>Exact match</td>
+                <td>Beirut, Tripoli, Sidon</td>
+            </tr>
+            <tr>
+                <td>Rating</td>
+                <td>rating= or rating equal</td>
+                <td>rating=4, rating equal 3</td>
+            </tr>
+            <tr>
+                <td>Cost</td>
+                <td>cost= or cost equal</td>
+                <td>cost=1500, cost equal 1200</td>
+            </tr>
+        </tbody>
+    </table>
+    <h2>Available Cities and Specializations</h2>
+    <table class="info-table">
+        <thead>
+            <tr>
+                <th>Cities</th>
+                <th>Specializations</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    Beirut, Tripoli, Sidon, Byblos, Zahle, Baalbek, Jezzine, Keserwan, Jounieh, Aley, Chouf, Tyre, Batroun, Zgharta, Baabda
+                </td>
+                <td>
+                    ENT Specialist, Neurosurgeon, Pediatric Surgeon, Cardiologist, Gastroenterologist, Orthopedic Surgeon, Dermatologist, Oncologist, General Surgeon, Plastic Surgeon
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

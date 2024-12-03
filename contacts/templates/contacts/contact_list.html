@@ -1,0 +1,56 @@
+<h1>Contact List by Amir Basha & Yassmine El Fadl</h1>
+<a href="{% url 'recommend_surgeons' %}">
+    <button>Filtering Recommendations</button>
+</a>
+<a href="{% url 'contact_create' %}">
+    <button>Add New Doctor Contact Details</button>
+</a>
+<a href="{% url 'smart_recommendation' %}">
+    <button>Smart Search Recommendation</button>
+</a>
+
+<a href="{% url 'similarity_recommendation' %}">
+    <button>KNN Similarity-Based Recommendation</button>
+</a>
+
+
+<form method="get" style="margin-top: 20px;">
+    <label for="sort_by">Sort By:</label>
+    <select name="sort_by" id="sort_by" onchange="submitForm()">
+        <option value="">None</option>
+        <option value="fees" {% if sort_by == "fees" %}selected{% endif %}>Fees</option>
+        <option value="rating" {% if sort_by == "rating" %}selected{% endif %}>Rating</option>
+    </select>
+
+    <label for="order">Order:</label>
+    <select name="order" id="order" onchange="submitForm()">
+        <option value="asc" {% if order == "asc" %}selected{% endif %}>Ascending</option>
+        <option value="desc" {% if order == "desc" %}selected{% endif %}>Descending</option>
+    </select>
+</form>
+<hr>
+
+<ul>
+    {% for contact in contacts %}
+        <li style="margin-bottom: 20px;">
+            <strong>{{ contact.name }}</strong> - {{ contact.specialization }}<br>
+            City: {{ contact.city }}<br>
+            Fees: ${{ contact.fees }} | Rating: {{ contact.rating }}<br>
+            Address: {{ contact.address }} | Phone: {{ contact.phone }}<br>
+            <a href="{% url 'contact_update' contact.pk %}">
+                <button>Edit</button>
+            </a>
+            <a href="{% url 'contact_delete' contact.pk %}">
+                <button>Delete</button>
+            </a>
+        </li>
+    {% empty %}
+        <p>No contacts found.</p>
+    {% endfor %}
+</ul>
+
+<script>
+    function submitForm() {
+        document.querySelector('form').submit();
+    }
+</script>

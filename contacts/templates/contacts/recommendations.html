@@ -1,0 +1,77 @@
+<h1>Surgeon Recommendations</h1>
+<form id="filterForm" method="get">
+    <label for="specialization">Specialization:</label>
+    <select name="specialization" id="specialization" onchange="submitForm()">
+        <option value="Any" {% if specialization == "Any" %}selected{% endif %}>Any</option>
+        {% for spec in specializations %}
+            <option value="{{ spec }}" {% if specialization == spec %}selected{% endif %}>{{ spec }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="city">City:</label>
+    <select name="city" id="city" onchange="submitForm()">
+        <option value="Any" {% if city == "Any" %}selected{% endif %}>Any</option>
+        {% for city_option in cities %}
+            <option value="{{ city_option }}" {% if city_option == city %}selected{% endif %}>{{ city_option }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="max_fees">Fees (Not More Than):</label>
+    <input type="number" name="max_fees" id="max_fees" value="{{ max_fees }}" onchange="submitForm()">
+
+    <label for="min_rating">Minimum Rating:</label>
+    <input type="number" name="min_rating" id="min_rating" step="0.1" min="1" max="5" value="{{ min_rating }}" onchange="submitForm()">
+
+    <label for="sort_by">Sort By:</label>
+    <select name="sort_by" id="sort_by" onchange="submitForm()">
+        <option value="">None</option>
+        <option value="fees" {% if sort_by == "fees" %}selected{% endif %}>Fees</option>
+        <option value="rating" {% if sort_by == "rating" %}selected{% endif %}>Rating</option>
+        <option value="proximity" {% if sort_by == "proximity" %}selected{% endif %}>Proximity</option>
+    </select>
+
+    <label for="order">Order:</label>
+    <select name="order" id="order" onchange="submitForm()">
+        <option value="asc" {% if order == "asc" %}selected{% endif %}>Ascending</option>
+        <option value="desc" {% if order == "desc" %}selected{% endif %}>Descending</option>
+    </select>
+
+    <label for="user_city">Your City:</label>
+    <select name="user_city" id="user_city" onchange="submitForm()">
+        <option value="Any" {% if user_city == "Any" %}selected{% endif %}>Any</option>
+        {% for city_option in cities %}
+            <option value="{{ city_option }}" {% if city_option == user_city %}selected{% endif %}>{{ city_option }}</option>
+        {% endfor %}
+    </select>
+
+    <button type="reset" onclick="resetForm()">Reset</button>
+</form>
+<hr>
+
+<h2>Results:</h2>
+<ul>
+    {% for surgeon in surgeons %}
+        <li>
+            <strong>{{ surgeon.name }}</strong> - {{ surgeon.specialization }}<br>
+            City: {{ surgeon.city }}<br>
+            Fees: ${{ surgeon.fees }} | Rating: {{ surgeon.rating }}<br>
+            Address: {{ surgeon.address }} | Phone: {{ surgeon.phone }}
+        </li>
+        <hr>
+    {% empty %}
+        <p>No surgeons match your criteria.</p>
+    {% endfor %}
+</ul>
+<a href="{% url 'contact_list' %}">Back to Contacts</a>
+
+<script>
+    // Automatically submit the form on change
+    function submitForm() {
+        document.getElementById('filterForm').submit();
+    }
+
+    // Reset the form to default values
+    function resetForm() {
+        window.location.href = "{% url 'recommend_surgeons' %}";
+    }
+</script>
